@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🗓️ Planner 5 weken</title>
+<style>
+    :root {
+        --bg: #0f1113;
+        --card-bg: #1a1d21;
+        --accent: #3b82f6;
+        --text: #e2e8f0;
+        --text-dim: #94a3b8;
+        --border: #2d3748;
+        --input-bg: #0f1113;
+        --input-border: #334155;
+        --week-section-bg-start: #1e293b;
+        --week-section-bg-end: #0f172a;
+
+        --urgent: #ef4444;
+        --medium: #f59e0b;
+        --low: #10b981;
+    }
+
+    body.light-mode {
+        --bg: #f8fafc;
+        --card-bg: #ffffff;
+        --accent: #1e63e9;
+        --text: #1e293b;
+        --text-dim: #64748b;
+        --border: #e2e8f0;
+        --input-bg: #f1f5f9;
+        --input-border: #cbd5e1;
+        --week-section-bg-start: #e0f2fe;
+        --week-section-bg-end: #bfdbfe;
+
+        --urgent: #cc3a3a;
+        --medium: #d48a0a;
+        --low: #0e9f78;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+        background: var(--bg); 
+        color: var(--text); 
+        padding: 20px;
+        line-height: 1.5;
+        transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    h1 { text-align: center; margin-bottom: 30px; font-weight: 700; letter-spacing: -0.5px; }
+    h3 { text-align: center; margin-bottom: 30px; font-weight: 700; letter-spacing: -0.5px; }
+    
+    #planner { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+        gap: 20px; 
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .week-section {
+        grid-column: 1 / -1;
+        background: linear-gradient(90deg, var(--week-section-bg-start), var(--week-section-bg-end));
+        padding: 20px;
+        border-radius: 12px;
+        margin-top: 10px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        transition: background 0.3s ease;
+    }
+    .week-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .week-header h2 { font-size: 1.25rem; color: var(--accent); }
+    
+    .week-goal {
+        width: 100%;
+        background: var(--input-bg);
+        border: 1px solid var(--input-border);
+        padding: 10px;
+        border-radius: 6px;
+        color: var(--text);
+        margin-bottom: 15px;
+        transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    }
+
+    .progress-container { width: 100%; height: 6px; background: var(--input-border); border-radius: 10px; overflow: hidden; }
+    .progress-bar-inner { height: 100%; background: var(--accent); width: 0%; transition: width 0.5s ease; }
+
+    .day { 
+        background: var(--card-bg); 
+        border-radius: 12px; 
+        padding: 16px; 
+        display: flex; 
+        flex-direction: column; 
+        border: 1px solid var(--border);
+        transition: transform 0.2s, background 0.3s ease, border-color 0.3s ease;
+        position: relative; 
+    }
+    .day:hover { transform: translateY(-2px); }
+    .day.today { border: 2px solid var(--accent); background: var(--input-bg); }
+    
+    .day-header { text-align: left; margin-bottom: 12px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+    .day-header h3 { font-size: 0.9rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+    .day-header span { font-size: 1.1rem; font-weight: bold; }
+
+    .tasks { flex-grow: 1; min-height: 50px; margin-bottom: 15px; }
+    .task { 
+        padding: 8px 12px; 
+        border-radius: 6px; 
+        margin-bottom: 8px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: space-between;
+        cursor: grab;
+        color: #000; 
+        font-weight: 500;
+        animation: fadeIn 0.3s ease;
+    }
+    .task-content {
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
+        gap: 8px;
+    }
+    .task input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        cursor: pointer;
+        border: 1px solid var(--text); 
+        background-color: var(--card-bg);
+        transition: background-color 0.3s;
+    }
+    .task input[type="checkbox"]:checked {
+        background-color: var(--accent);
+        border-color: var(--accent);
+    }
+
+    .task.completed {
+        opacity: 0.5;
+        transition: opacity 0.3s;
+    }
+    .task.completed span {
+        text-decoration: line-through;
+    }
+    
+    .task-text { flex: 1; font-size: 14px; }
+    .task button { 
+        background: rgba(255,255,255,0.3); 
+        border: none; 
+        width: 22px; height: 22px; 
+        border-radius: 50%; 
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        transition: background 0.2s;
+    }
+    .task button:hover { background: rgba(255,255,255,0.5); }
+
+    .input-group { 
+        display: flex; 
+        flex-direction: column; 
+        gap: 8px; 
+        background: var(--input-border); 
+        padding: 10px; 
+        border-radius: 8px; 
+        transition: background 0.3s ease;
+        z-index: 10; 
+        position: relative;
+    }
+    .input-group input { 
+        background: var(--input-bg); 
+        border: 1px solid var(--input-border); 
+        color: var(--text); 
+        padding: 8px; 
+        border-radius: 4px;
+        transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    }
+    .controls-row { display: flex; gap: 5px; }
+    .controls-row select { 
+        flex: 1; background: var(--input-border); color: var(--text); border: none; 
+        border-radius: 4px; font-size: 12px; padding: 0 4px;
+        transition: background 0.3s ease, color 0.3s ease;
+    }
+    .add-btn { 
+        flex: 1;
+        background: var(--accent); 
+        color: white; 
+        border: none; 
+        padding: 8px; 
+        border-radius: 4px; 
+        cursor: pointer; 
+        font-weight: bold;
+        transition: background 0.2s;
+    }
+    .add-btn:hover { filter: brightness(1.2); }
+
+    .credits {
+        text-align: center;
+        margin-top: 40px;
+        padding-top: 15px;
+        font-size: 0.8rem;
+        color: var(--text-dim);
+        border-top: 1px solid var(--border);
+        transition: color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .theme-toggle-container {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .theme-toggle-btn {
+        background: var(--card-bg);
+        color: var(--text);
+        border: 1px solid var(--border);
+        padding: 8px 15px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+    .theme-toggle-btn:hover {
+        background: var(--input-bg);
+    }
+
+
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+    @media(max-width: 600px) {
+        #planner { grid-template-columns: 1fr; }
+        body { padding: 10px; }
+    }
+</style>
+</head>
+<body>
+
+<div class="theme-toggle-container">
+    <button id="theme-toggle" class="theme-toggle-btn">Schakel Licht/Donker Modus</button>
+</div>
+
+<h1>5 Weken Planner</h1>
+<h3>Plan 5 weken vooruit!</h2>
+<div id="planner"></div>
+
+<div class="credits">
+    Designed by Milan • Since Dec 5, 2025
+</div>
+
+<script>
+const START_DATE = new Date("2025-12-08"); 
+let dragged = null;
+
+let data = { "weeks": ["","","","",""], "days": {} };
+const saved = localStorage.getItem("plannerDataModern");
+if(saved) data = JSON.parse(saved);
+
+if (data.weeks.length < 5) {
+    while (data.weeks.length < 5) {
+        data.weeks.push("");
+    }
+}
+
+
+function save() { 
+    localStorage.setItem("plannerDataModern", JSON.stringify(data)); 
+    updateProgress();
+}
+
+function formatDate(d) { return d.toISOString().split("T")[0]; }
+
+function getPriorityColor(p) {
+    if(p === "urgent") return "var(--urgent)";
+    if(p === "medium") return "var(--medium)";
+    return "var(--low)";
+}
+
+function getWeekNumber(d) {
+    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
+    var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    var weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+    return weekNo;
+}
+
+
+function updateProgress() {
+    for(let w=0; w<5; w++) {
+        let total = 0, done = 0;
+        for(let d=0; d<7; d++) {
+            const date = new Date(START_DATE);
+            date.setDate(date.getDate() + w*7 + d);
+            const key = formatDate(date);
+            if(data.days[key]) {
+                total += data.days[key].length;
+                done += data.days[key].filter(t => t.completed).length;
+            }
+        }
+        const perc = total === 0 ? 0 : Math.round((done / total) * 100);
+        const bar = document.getElementById(`progress-${w}`);
+        if(bar) bar.style.width = perc + "%";
+    }
+}
+
+function render() {
+    const planner = document.getElementById("planner");
+    planner.innerHTML = "";
+
+    for(let w=0; w<5; w++) {
+        const weekStartDate = new Date(START_DATE);
+        weekStartDate.setDate(weekStartDate.getDate() + w * 7);
+        const weekNumber = getWeekNumber(weekStartDate);
+
+        const weekHtml = `
+            <div class="week-section">
+                <div class="week-header">
+                    <h2>Week ${weekNumber}</h2>
+                    <span id="perc-label-${w}" style="font-size: 0.8rem; color: var(--text-dim)"></span>
+                </div>
+                <input class="week-goal" placeholder="Wat is je belangrijkste focus deze week?" 
+                       value="${data.weeks[w] || ''}" 
+                       onchange="data.weeks[${w}]=this.value;save()">
+                <div class="progress-container">
+                    <div class="progress-bar-inner" id="progress-${w}"></div>
+                </div>
+            </div>`;
+        planner.insertAdjacentHTML('beforeend', weekHtml);
+
+        for(let d=0; d<7; d++) {
+            const date = new Date(START_DATE);
+            date.setDate(date.getDate() + w*7 + d);
+            const key = formatDate(date);
+            if(!data.days[key]) data.days[key] = [];
+
+            const isToday = formatDate(new Date()) === key;
+            // 1. CHANGED LOCALE TO 'nl-NL' for date and day name
+            const displayDate = date.toLocaleDateString('nl-NL', { month: 'short', day: 'numeric' });
+            const dayName = date.toLocaleDateString('nl-NL', { weekday: 'long' });
+
+            const dayDiv = document.createElement("div");
+            dayDiv.className = `day ${isToday ? 'today' : ''}`;
+            
+            dayDiv.setAttribute('ondragover', 'event.preventDefault()');
+            dayDiv.setAttribute('ondrop', `drop(event, '${key}')`);
+
+            dayDiv.innerHTML = `
+                <div class="day-header">
+                    <h3>${dayName}</h3>
+                    <span>${displayDate}</span>
+                </div>
+                <div class="tasks" id="tasks-${key}">
+                </div>
+                <div class="input-group">
+                    <input id="i-${key}" placeholder="Voeg taak toe...">
+                    <div class="controls-row">
+                        <select id="p-${key}">
+                            <option value="low">Laag</option>
+                            <option value="medium">Midden</option>
+                            <option value="urgent">Dringend</option>
+                        </select>
+                        <button class="add-btn" onclick="add('${key}')">Toevoegen</button>
+                    </div>
+                </div>`;
+
+            planner.appendChild(dayDiv);
+            renderTasks(key);
+        }
+    }
+    updateProgress();
+}
+
+function renderTasks(key) {
+    const container = document.getElementById(`tasks-${key}`);
+    container.innerHTML = "";
+    
+    const currentTasks = data.days[key];
+
+    const sorted = [...currentTasks].sort((a,b) => {
+        if (a.completed !== b.completed) return a.completed - b.completed; 
+        const order = {urgent: 0, medium: 1, low: 2};
+        return order[a.priority] - order[b.priority];
+    });
+
+    sorted.forEach((t) => {
+        const originalIndex = currentTasks.findIndex(task => task.text === t.text && task.priority === t.priority && task.completed === t.completed);
+
+        const el = document.createElement('div');
+        el.className = `task ${t.completed ? 'completed' : ''}`;
+        el.draggable = true;
+        el.style.backgroundColor = getPriorityColor(t.priority);
+        
+        el.addEventListener('dragstart', () => dragged = {key, i: originalIndex});
+        
+        el.innerHTML = `
+            <div class="task-content">
+                <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleCompletion('${key}', ${originalIndex})">
+                <span class="task-text" contenteditable onblur="edit('${key}', ${originalIndex}, this.innerText)">${t.text}</span>
+            </div>
+            <button onclick="del('${key}', ${originalIndex})">✕</button>
+        `;
+        container.appendChild(el);
+    });
+}
+
+function add(key) {
+    const input = document.getElementById(`i-${key}`);
+    const priority = document.getElementById(`p-${key}`).value;
+    if(!input.value.trim()) return;
+    
+    data.days[key].push({ text: input.value, priority: priority, completed: false });
+    input.value = ''; 
+    save();
+    render(); 
+}
+
+function toggleCompletion(key, i) {
+    data.days[key][i].completed = !data.days[key][i].completed;
+    save();
+    render();
+}
+
+function del(key, i) {
+    data.days[key].splice(i, 1);
+    save();
+    render();
+}
+
+function edit(key, i, text) {
+    data.days[key][i].text = text;
+    save();
+}
+
+function drop(e, targetKey) {
+    e.preventDefault();
+    if(!dragged) return;
+    
+    const task = data.days[dragged.key][dragged.i];
+    
+    data.days[dragged.key].splice(dragged.i, 1);
+    
+    data.days[targetKey].push(task);
+    
+    dragged = null;
+    save();
+    render();
+}
+
+const themeToggleBtn = document.getElementById('theme-toggle');
+const body = document.body;
+
+function applyTheme(theme) {
+    if (theme === 'light') {
+        body.classList.add('light-mode');
+    } else {
+        body.classList.remove('light-mode');
+    }
+    localStorage.setItem('theme', theme);
+}
+
+const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+applyTheme(savedTheme);
+
+themeToggleBtn.addEventListener('click', () => {
+    const currentTheme = body.classList.contains('light-mode') ? 'light' : 'dark';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    applyTheme(newTheme);
+});
+
+render();
+</script>
+</body>
+</html>
